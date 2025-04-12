@@ -1,0 +1,67 @@
+**Verilog Design Code**
+```verilog
+module digital_lock (
+    input clk,
+    input rst,
+    input [3:0] code_in,
+    output reg unlock
+);
+    parameter PASSCODE = 4'b1011;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            unlock <= 0;
+        else if (code_in == PASSCODE)
+            unlock <= 1;
+        else
+            unlock <= 0;
+    end
+endmodule
+```
+
+**Explanation of Code**  
+- `PASSCODE` is defined as a parameter, so it can be changed easily.  
+- The always block is triggered on the rising edge of `clk` or `rst`.  
+- If `rst` is asserted, the system resets the unlock signal.  
+- On each clock edge, the input is compared with the passcode.  
+- If matched, `unlock` is set to 1; else, it is set to 0.
+
+**Testbench Code**
+```verilog
+module tb_digital_lock;
+    reg clk, rst;
+    reg [3:0] code_in;
+    wire unlock;
+
+    digital_lock uut (
+        .clk(clk),
+        .rst(rst),
+        .code_in(code_in),
+        .unlock(unlock)
+    );
+
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    initial begin
+        $monitor("Time=%0t | Reset=%b | Code=%b | Unlock=%b", $time, rst, code_in, unlock);
+        rst = 1; code_in = 4'b0000; #10;
+        rst = 0;
+
+        code_in = 4'b0001; #10;
+        code_in = 4'b1011; #10;
+        code_in = 4'b1111; #10;
+        code_in = 4'b1011; #10;
+
+        $finish;
+    end
+endmodule
+```
+
+**Simulation Output (Expected)**  
+```
+Time=0   | Reset=1 | Code=0000 | Unlock=0
+Time=10  | Reset=0 | Code=0001 | Unlock=0
+Time=20  | Reset=0 | Code=1011 | Unlock=1
+Time=30  | Reset=0 | Code=1111 | Unlock=0
+Time=40  | Reset=0 | Code=1011 | Unlock=1
